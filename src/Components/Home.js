@@ -1,13 +1,12 @@
 import React from 'react'
 import { useState } from 'react';
+import axios from 'axios';
 
 export default function Home() {
 
-    // Initialize state variables for the date inputs
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-
-    // Event handler for when the start date changes
+    const BASE_URL = process.env.REACT_APP_BASE_URL;
     const handleStartDateChange = (event) => {
         setStartDate(event.target.value);
     };
@@ -17,31 +16,32 @@ export default function Home() {
         setEndDate(event.target.value);
     };
 
-    // Yoss
-
     const handleDownload = () => {
-        console.log('Downloading file...');
-        console.log(startDate, endDate, 'start and end date');
-        // Replace 'https://api.example.com/file' with your actual API URL
-        fetch(`http://localhost:5000/users/get-users-datas?start_date=${startDate}&end_date=${endDate}`)
-            .then(response => response.blob()) // Assuming the response is a Blob
-            .then(blob => {
-                // Create a URL for the blob
-                const url = window.URL.createObjectURL(blob);
-                // Create a temporary <a> element and trigger a download
+        axios.get(`${BASE_URL}/users/get-users-datas?start_date=${startDate}&end_date=${endDate}`, {
+            responseType: 'blob',
+            headers: {
+                accept: "application/json",
+            },
+        })
+            .then(response => {
+                console.log(response, 'response');
+                const url = window.URL.createObjectURL(new Blob([response.data], { type: 'text/csv' }));
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = 'downloadedFile'; // You can name the file here
-                document.body.appendChild(a); // Append the <a> element to the document
-                a.click(); // Trigger a click on the element to start the download
-                window.URL.revokeObjectURL(url); // Clean up by revoking the Blob URL
-                a.remove(); // Remove the <a> element
+                a.download = 'downloadedFile.csv'; // Naming the file with a .csv extension
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                a.remove();
             })
-            .catch(error => console.error('Error downloading file:', error));
-    };
+            .catch(error => {
+                console.log(error, 'There was an error!');
+            }
+            );
 
+    };
     return (
-        <div style={{ width: '100%', display: 'flex', alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
+        <div className='lll' style={{ width: '100%', display: 'flex', alignItems: "center", justifyContent: "center", flexDirection: "column" }}>
             <div className='navbar' style={{
                 // backgroundColor: '#55AD9B',  
                 width: '100%',
@@ -50,7 +50,7 @@ export default function Home() {
 
             }}>
                 <h1>Meraki's New Users</h1>
-                <p style={{fontWeight:'bold'}}>
+                <p style={{ fontWeight: 'bold' }}>
                     Download the data of new users who have joined Meraki between two dates.
                 </p>
             </div>
